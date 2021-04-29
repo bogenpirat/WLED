@@ -4,6 +4,10 @@
  *   (for v1 usermods using just usermod.cpp, you can ignore this file)
  */
 
+#ifdef USERMOD_BETTLICHTSENSORS
+#include "../usermods/bettlicht-sensors/usermod_bettlicht-sensors.h"
+#endif
+
 /*
  * Add/uncomment your usermod filename here (and once more below)
  * || || ||
@@ -57,6 +61,10 @@ void registerUsermods()
    * || || ||
    * \/ \/ \/
    */
+  #ifdef USERMOD_BETTLICHTSENSORS
+  usermods.add(new BettlichtSensors());
+  #endif
+
   //usermods.add(new MyExampleUsermod());
   
   #ifdef USERMOD_DALLASTEMPERATURE
