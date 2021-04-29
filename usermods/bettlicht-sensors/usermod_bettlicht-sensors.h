@@ -26,11 +26,13 @@ class BettlichtSensors : public Usermod {
     //Private class members. You can declare variables and functions only accessible to your usermod here
     unsigned long lastTime = 0;
 
-    // make this ui-configurable
+    // TODO: make this ui-configurable
     std::vector<unsigned short> ldrPins;
     std::vector<unsigned short> pirPins;
     unsigned int ldrThreshold;
     unsigned long stayOnTime; // millis
+    float ldrKnownResistor; // Ohms
+    float ldrVoltage; // Volts
 
     // values retrieved from the sensors
     std::vector<unsigned int> ldrValues;
@@ -117,6 +119,22 @@ class BettlichtSensors : public Usermod {
       return ret;
     }
 
+    /*
+     * measures the missing resistance on a voltage divider circuit based off some parameters
+     */
+    long getAvgLdrResistance() {
+      long ret = 0;
+      float R2sums = 0;
+
+      for(int i = 0; i < this->ldrValues.size(); i++) {
+        R2sums += this->ldrKnownResistor * (pow(2, 12) / (float)this->ldrValues[i] - 1);
+      }
+
+      ret = floor(R2sums / this->ldrValues.size());
+
+      return ret;
+    }
+
 
   public:
     //Functions called by WLED
@@ -131,6 +149,8 @@ class BettlichtSensors : public Usermod {
       this->pirPins.push_back(13);
       this->ldrThreshold = 500; // ADC res is 12bit, so values of 2^12 = 0-4095
       this->stayOnTime = 60*1000; // ms
+      this->ldrKnownResistor = 10E4; // Ohms
+      this->ldrVoltage = 5; // Volts
 
       // set up digital pins
       for(int i = 0; i < this->pirPins.size(); i++) {
@@ -175,19 +195,27 @@ class BettlichtSensors : public Usermod {
      * Creating an "u" object allows you to add custom key/value pairs to the Info section of the WLED web UI.
      * Below it is shown how this could be used for e.g. a light sensor
      */
-    /*
     void addToJsonInfo(JsonObject& root)
     {
-      int reading = 20;
+      uint8_t numPirsTriggered = 0;
+      for(int i = 0; i < this->pirValues.size(); i++) {
+        if((bool) this->pirValues[i]) {
+          numPirsTriggered++;
+        }
+      }
+
       //this code adds "u":{"Light":[20," lux"]} to the info object
       JsonObject user = root["u"];
       if (user.isNull()) user = root.createNestedObject("u");
 
-      JsonArray lightArr = user.createNestedArray("Light"); //name
-      lightArr.add(reading); //value
-      lightArr.add(" lux"); //unit
+      JsonArray ldrArr = user.createNestedArray("Average LDR voltage");
+      ldrArr.add(getAvgLdrResistance()); //value
+      ldrArr.add("Ω"); //unit
+
+      JsonArray pirArr = user.createNestedArray("PIR");
+      pirArr.add(numPirsTriggered); //value
+      pirArr.add(" triggered"); //unit
     }
-    */
 
 
     /*
