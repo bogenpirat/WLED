@@ -39,57 +39,6 @@ class BettlichtSensors : public Usermod {
     // state management
     boolean lastOnManual = false;
     unsigned long lastPirTriggeredTime = 0;
-  public:
-    //Functions called by WLED
-
-    /*
-     * setup() is called once at boot. WiFi is not yet connected at this point.
-     * You can use it to initialize variables, sensors or similar.
-     */
-    void setup() {
-      // TODO: move this out to config
-      this->ldrPins.push_back(32);
-      this->pirPins.push_back(13);
-      this->ldrThreshold = 500; // ADC res is 12bit, so values of 2^12 = 0-4095
-      this->stayOnTime = 60*1000; // ms
-
-      // set up digital pins
-      for(int i = 0; i < this->pirPins.size(); i++) {
-        pinMode(this->pirPins[i], INPUT);
-      }
-    }
-
-
-    /*
-     * connected() is called every time the WiFi is (re)connected
-     * Use it to initialize network interfaces
-     */
-    void connected() {
-      //Serial.println("Connected to WiFi!");
-    }
-
-
-    /*
-     * loop() is called continuously. Here you can check for events, read sensors, etc.
-     * 
-     * Tips:
-     * 1. You can use "if (WLED_CONNECTED)" to check for a successful network connection.
-     *    Additionally, "if (WLED_MQTT_CONNECTED)" is available to check for a connection to an MQTT broker.
-     * 
-     * 2. Try to avoid using the delay() function. NEVER use delays longer than 10 milliseconds.
-     *    Instead, use a timer check as shown here.
-     */
-    void loop() {
-      if (millis() - lastTime > 300) {
-        //uint16_t start = millis(); // TODO: benchmarking
-        
-        updateSensors();
-        
-        // uint16_t end = this->lastTime = millis(); // TODO: benchmarking
-        //Serial.print("loop timing: "); Serial.print(end - start); Serial.println("ms"); // TODO:debugging
-      }
-    }
-
 
     /*
      * read data from sensors - not a WLED callback
@@ -111,7 +60,7 @@ class BettlichtSensors : public Usermod {
 
       boolean isOn = bri != 0;
 
-      /* 
+      /*
        * turn on the LEDs iff: 
        * - they are currently off
        * - the PIR detects motion
@@ -166,6 +115,58 @@ class BettlichtSensors : public Usermod {
       }
 
       return ret;
+    }
+
+
+  public:
+    //Functions called by WLED
+
+    /*
+     * setup() is called once at boot. WiFi is not yet connected at this point.
+     * You can use it to initialize variables, sensors or similar.
+     */
+    void setup() {
+      // TODO: move this out to config
+      this->ldrPins.push_back(32);
+      this->pirPins.push_back(13);
+      this->ldrThreshold = 500; // ADC res is 12bit, so values of 2^12 = 0-4095
+      this->stayOnTime = 60*1000; // ms
+
+      // set up digital pins
+      for(int i = 0; i < this->pirPins.size(); i++) {
+        pinMode(this->pirPins[i], INPUT);
+      }
+    }
+
+
+    /*
+     * connected() is called every time the WiFi is (re)connected
+     * Use it to initialize network interfaces
+     */
+    void connected() {
+      //Serial.println("Connected to WiFi!");
+    }
+
+
+    /*
+     * loop() is called continuously. Here you can check for events, read sensors, etc.
+     * 
+     * Tips:
+     * 1. You can use "if (WLED_CONNECTED)" to check for a successful network connection.
+     *    Additionally, "if (WLED_MQTT_CONNECTED)" is available to check for a connection to an MQTT broker.
+     * 
+     * 2. Try to avoid using the delay() function. NEVER use delays longer than 10 milliseconds.
+     *    Instead, use a timer check as shown here.
+     */
+    void loop() {
+      if (millis() - lastTime > 300) {
+        //uint16_t start = millis(); // TODO: benchmarking
+        
+        updateSensors();
+        
+        // uint16_t end = this->lastTime = millis(); // TODO: benchmarking
+        //Serial.print("loop timing: "); Serial.print(end - start); Serial.println("ms"); // TODO:debugging
+      }
     }
 
 
