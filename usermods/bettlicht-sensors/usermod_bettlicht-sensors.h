@@ -1,6 +1,9 @@
 #pragma once
 
 #include "wled.h"
+#include <sstream>
+#include <string>
+#include <cstdlib>
 
 /*
  * Usermods allow you to add own functionality to WLED more easily
@@ -127,7 +130,7 @@ class BettlichtSensors : public Usermod {
       float R2sums = 0;
 
       for(int i = 0; i < this->ldrValues.size(); i++) {
-        R2sums += this->ldrKnownResistor * (pow(2, 12) / (float)this->ldrValues[i] - 1);
+        R2sums += getResistanceFromRawVoltage(this->ldrKnownResistor, 12, this->ldrValues[i]);
       }
 
       ret = floor(R2sums / this->ldrValues.size());
@@ -274,8 +277,44 @@ class BettlichtSensors : public Usermod {
      */
     void addToConfig(JsonObject& root)
     {
-      JsonObject top = root.createNestedObject("exampleUsermod");
-      top["great"] = userVar0; //save this var persistently whenever settings are saved
+      JsonObject top = root.createNestedObject("bettlicht-sensors");
+
+      std::stringstream ss;
+
+      // serialize pir pins
+      for(int i = 0; i < this->pirPins.size(); i++) {
+        ss << this->pirPins[i];
+        if(i != this->pirPins.size() - 1) {
+          ss << ",";
+        }
+      }
+      std::string pirPinsSerialized = ss.str();
+      top["pirPins"] = pirPinsSerialized;
+
+      // reset the stringstream for re-use
+      ss.str(std::string());
+      ss.clear();
+
+      // serialize ldr pins
+      for(int i = 0; i < this->ldrPins.size(); i++) {
+        ss << this->ldrPins[i];
+        if(i != this->ldrPins.size() - 1) {
+          ss << ",";
+        }
+      }
+      std::string ldrPinsSerialized = ss.str();
+      top["ldrPins"] = ldrPinsSerialized;
+
+      // reset the stringstream for re-use
+      ss.str(std::string());
+      ss.clear();
+
+      // set trivially-typed values
+      top["ldrThreshold"] = this->ldrThreshold;
+      top["ldrVoltage"] = this->ldrVoltage;
+      top["ldrKnownResistor"] = this->ldrKnownResistor;
+
+      top["stayOnTime"] = this->stayOnTime;
     }
 
 
@@ -289,8 +328,33 @@ class BettlichtSensors : public Usermod {
      */
     void readFromConfig(JsonObject& root)
     {
-      JsonObject top = root["top"];
-      userVar0 = top["great"] | 42; //The value right of the pipe "|" is the default value in case your setting was not present in cfg.json (e.g. first boot)
+      JsonObject top = root["bettlicht-sensors"];
+      
+      this->ldrThreshold = top["ldrThreshold"] | 500;
+      this->ldrVoltage = top["ldrVoltage"] | 5.0F;
+      this->ldrKnownResistor = top["ldrKnownResistor"] | 10000;
+      this->stayOnTime = top["stayOnTime"] | 500;
+
+      // do pir pin deserialization
+      std::vector<unsigned short> pirPinsNew;
+      std::istringstream pirPinStream(top["pirPins"] | std::string());
+      std::string s;
+      while(std::getline(pirPinStream, s, ',')) {
+        pirPinsNew.push_back(strtoul(s.c_str(), nullptr, 10));
+      }
+      if(pirPinsNew.size() > 0) {
+        this->pirPins = pirPinsNew;
+      }
+
+      // do ldr pin deserialization
+      std::vector<unsigned short> ldrPinsNew;
+      std::istringstream ldrPinStream(top["ldrPins"] | std::string());
+      while(std::getline(ldrPinStream, s, ',')) {
+        ldrPinsNew.push_back(strtoul(s.c_str(), nullptr, 10));
+      }
+      if(ldrPinsNew.size() > 0) {
+        this->ldrPins = ldrPinsNew;
+      }
     }
 
    
@@ -305,4 +369,18 @@ class BettlichtSensors : public Usermod {
 
    //More methods can be added in the future, this example will then be extended.
    //Your usermod will remain compatible as it does not need to implement all methods from the Usermod base class!
+    
+    /*
+     * calculate resistance from a raw voltage input
+     */
+    static float getResistanceFromRawVoltage(long knownR, short precision, unsigned int input) {
+      return knownR * (pow(2, precision) / (float)input - 1);
+    }
+    
+    /*
+     * calculate resistance from a raw voltage input
+     */
+    static float getRawVoltageFromResistance(long knownR, short precision, long resistance) {
+      return pow(2, precision) / ((float)resistance / (float)knownR + 1);
+    }
 };

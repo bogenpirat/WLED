@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+	<meta name="viewport" content="width=500">
+	<title>Sensors Settings</title>
+	<script>
+		function H()
+		{
+			window.open("https://github.com/Aircoookie/WLED/wiki/Settings#sensors-settings");
+		}
+		function B()
+		{
+			window.open("/settings","_self");
+		}
+		function GetV()
+		{
+			//values injected by server while sending HTML
+		}
+	</script>
+	<style>
+		@import url("style.css");
+	</style>
+</head>
+<body onload="GetV()">
+	<form id="form_s" name="Sf" method="post">
+		<div class="helpB"><button type="button" onclick="H()">?</button></div>
+		<button type="button" onclick="B()">Back</button><button type="submit">Save & Connect</button><hr>
+		<h2>Sensors setup</h2>
+		<h3>Light-dependent resistors</h3>
+		Pins used for LDRs: <input name="LDRs" maxlength="32" type="text"><br><i>(as numbers, comma-separated)</i><br>
+		Threshold: <input type="number" name="ldrThreshold" min="0" value="500">Ω<br><i>(LDR is tripped below this value)</i><br>
+		Known resistor: <input type="number" name="ldrRes" min="0" value="10000">Ω<br><i>(for calculating LDR's resistance)</i><br>
+		Voltage: <input type="number" name="ldrVoltage" min="0" value="5">V<br>
+		
+		<h3>Passive Infrared Sensors</h3>
+		Pins used for PIRs <br> <input name="PIRs" maxlength="32"><br></i>(as numbers, comma-separated)</i><br>
+		
+		<h3>Activation time</h3>
+		Time to stay active: <input type="number" name="stayOnTime" min="0" value="60000">ms<br>
+		
+		<hr>
+		<button type="button" onclick="B()">Back</button><button type="submit">Save & Connect</button>
+	</form>
+</body>
+</html>
