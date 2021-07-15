@@ -334,8 +334,8 @@ const char PAGE_settings_dmx[] PROGMEM = R"=====()=====";
           ),
     },
     {
-      file: "settings_sensors.htm",
-      name: "PAGE_settings_sensors",
+      file: "settings_um.htm",
+      name: "PAGE_settings_um",
       prepend: "=====(",
       append: ")=====",
       method: "plaintext",
