@@ -74,7 +74,7 @@ class BettlichtSensors : public Usermod {
       if(!isOn && isPirTriggered() && isLdrTriggered()) {
         lastOnManual = false;
         bri = briLast;
-        colorUpdated(NOTIFIER_CALL_MODE_NO_NOTIFY);
+        colorUpdated(CALL_MODE_NO_NOTIFY);
       }
 
       /* 
@@ -86,7 +86,7 @@ class BettlichtSensors : public Usermod {
       if(isOn && !this->lastOnManual && millis() - this->lastPirTriggeredTime > this->stayOnTime) {
         briLast = bri;
         bri = 0;
-        colorUpdated(NOTIFIER_CALL_MODE_NO_NOTIFY);
+        colorUpdated(CALL_MODE_NO_NOTIFY);
       }
     }
 
@@ -326,7 +326,7 @@ class BettlichtSensors : public Usermod {
      * but also that if you want to write persistent values to a dynamic buffer, you'd need to allocate it here instead of in setup.
      * If you don't know what that is, don't fret. It most likely doesn't affect your use case :)
      */
-    void readFromConfig(JsonObject& root)
+    bool readFromConfig(JsonObject& root)
     {
       JsonObject top = root["bettlicht-sensors"];
       
