@@ -348,7 +348,7 @@ const char PAGE_settings_dmx[] PROGMEM = R"=====()=====";
             /function GetV().*\<\/script\>/gms,
             "function GetV() {var d=document;\n"
           ),
-    },
+    }
   ],
   "wled00/html_settings.h"
 );
