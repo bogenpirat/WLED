@@ -1,7 +1,6 @@
 #pragma once
 
 #include "wled.h"
-#include <sstream>
 #include <string>
 #include <cstdlib>
 
@@ -279,35 +278,27 @@ class BettlichtSensors : public Usermod {
     {
       JsonObject top = root.createNestedObject("bettlicht-sensors");
 
-      std::stringstream ss;
+      std::string pirPinsSerialized;
 
       // serialize pir pins
       for(int i = 0; i < this->pirPins.size(); i++) {
-        ss << this->pirPins[i];
+        pirPinsSerialized += this->pirPins[i];
         if(i != this->pirPins.size() - 1) {
-          ss << ",";
+          pirPinsSerialized += ",";
         }
       }
-      std::string pirPinsSerialized = ss.str();
       top["pirPins"] = pirPinsSerialized;
 
-      // reset the stringstream for re-use
-      ss.str(std::string());
-      ss.clear();
-
+      
+      std::string ldrPinsSerialized;
       // serialize ldr pins
       for(int i = 0; i < this->ldrPins.size(); i++) {
-        ss << this->ldrPins[i];
+        ldrPinsSerialized += this->ldrPins[i];
         if(i != this->ldrPins.size() - 1) {
-          ss << ",";
+          ldrPinsSerialized += ",";
         }
       }
-      std::string ldrPinsSerialized = ss.str();
       top["ldrPins"] = ldrPinsSerialized;
-
-      // reset the stringstream for re-use
-      ss.str(std::string());
-      ss.clear();
 
       // set trivially-typed values
       top["ldrThreshold"] = this->ldrThreshold;
@@ -337,10 +328,16 @@ class BettlichtSensors : public Usermod {
 
       // do pir pin deserialization
       std::vector<unsigned short> pirPinsNew;
-      std::istringstream pirPinStream(top["pirPins"] | std::string());
-      std::string s;
-      while(std::getline(pirPinStream, s, ',')) {
-        pirPinsNew.push_back(strtoul(s.c_str(), nullptr, 10));
+      const char* str;
+      if(top.containsKey("pirPins")) {
+        str = top["pirPins"].as<const char*>();
+      } else {
+        str = std::string().c_str();
+      }
+      std::vector<std::string> pirPinsStrs = BettlichtSensors::split(str, ',');
+      
+      for(auto it = std::begin(pirPinsStrs); it != std::end(pirPinsStrs); ++it) {
+        pirPinsNew.push_back(strtoul(it->c_str(), nullptr, 10));
       }
       if(pirPinsNew.size() > 0) {
         this->pirPins = pirPinsNew;
@@ -348,9 +345,15 @@ class BettlichtSensors : public Usermod {
 
       // do ldr pin deserialization
       std::vector<unsigned short> ldrPinsNew;
-      std::istringstream ldrPinStream(top["ldrPins"] | std::string());
-      while(std::getline(ldrPinStream, s, ',')) {
-        ldrPinsNew.push_back(strtoul(s.c_str(), nullptr, 10));
+      if(top.containsKey("ldrPins")) {
+        str = top["ldrPins"].as<const char*>();
+      } else {
+        str = std::string().c_str();
+      }
+      std::vector<std::string> ldrPinsStrs = BettlichtSensors::split(str, ',');
+      
+      for(auto it = std::begin(ldrPinsStrs); it != std::end(ldrPinsStrs); ++it) {
+        ldrPinsNew.push_back(strtoul(it->c_str(), nullptr, 10));
       }
       if(ldrPinsNew.size() > 0) {
         this->ldrPins = ldrPinsNew;
@@ -382,5 +385,22 @@ class BettlichtSensors : public Usermod {
      */
     static float getRawVoltageFromResistance(long knownR, short precision, long resistance) {
       return pow(2, precision) / ((float)resistance / (float)knownR + 1);
+    }
+
+    static std::vector<std::string> split(const char *str, char c = ' ')
+    {
+        std::vector<std::string> result;
+
+        do
+        {
+            const char *begin = str;
+
+            while(*str != c && *str)
+                str++;
+
+            result.push_back(std::string(begin, str));
+        } while (0 != *str++);
+
+        return result;
     }
 };
