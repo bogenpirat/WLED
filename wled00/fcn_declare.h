@@ -58,9 +58,6 @@ void colorFromUint32(uint32_t in, bool secondary = false);
 void colorFromUint24(uint32_t in, bool secondary = false);
 uint32_t colorFromRgbw(byte* rgbw);
 void relativeChangeWhite(int8_t amount, byte lowerBoundary = 0);
-void colorHSVtoRGB(float hue, float saturation, float value, byte& red, byte& green, byte& blue);
-void colorRGBtoHSV(byte red, byte green, byte blue, float& hue, float& saturation, float& value);
-void correctColors(byte r, byte g, byte b, byte* rgb);
 void colorHStoRGB(uint16_t hue, byte sat, byte* rgb); //hue, sat to rgb
 void colorKtoRGB(uint16_t kelvin, byte* rgb);
 void colorCTtoRGB(uint16_t mired, byte* rgb); //white spectrum to rgb
@@ -198,6 +195,7 @@ bool updateVal(const String* req, const char* key, byte* val, byte minv=0, byte 
 
 //udp.cpp
 void notify(byte callMode, bool followUp=false);
+uint8_t realtimeBroadcast(uint8_t type, IPAddress client, uint16_t length, byte *buffer, uint8_t bri=255, bool isRGBW=false);
 void realtimeLock(uint32_t timeoutMs, byte md = REALTIME_MODE_GENERIC);
 void handleNotifications();
 void setRealtimePixel(uint16_t i, byte r, byte g, byte b, byte w);
@@ -208,6 +206,7 @@ void sendSysInfoUDP();
 class Usermod {
   public:
     virtual void loop() {}
+    virtual void handleOverlayDraw() {}
     virtual void setup() {}
     virtual void connected() {}
     virtual void addToJsonState(JsonObject& obj) {}
@@ -227,14 +226,13 @@ class UsermodManager {
 
   public:
     void loop();
+    void handleOverlayDraw();
 
     void setup();
     void connected();
-
     void addToJsonState(JsonObject& obj);
     void addToJsonInfo(JsonObject& obj);
     void readFromJsonState(JsonObject& obj);
-
     void addToConfig(JsonObject& obj);
     bool readFromConfig(JsonObject& obj);
     void onMqttConnect(bool sessionPresent);
