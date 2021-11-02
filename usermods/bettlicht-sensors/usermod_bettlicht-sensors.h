@@ -56,7 +56,7 @@ class BettlichtSensors : public Usermod {
       for(int i = 0; i < this->ldrPins.size(); i++) {
         this->ldrValues.push_back(analogRead(this->ldrPins[i]));
       }
-      
+
       // check if PIR was triggered and if so, note the time
       if(isPirTriggered()) {
         this->lastPirTriggeredTime = millis();
@@ -70,7 +70,7 @@ class BettlichtSensors : public Usermod {
        * - the PIR detects motion
        * - the LDR shows low light conditions
        */
-      if(!isOn && isPirTriggered() && isLdrTriggered()) {
+      if(!isOn && isPirTriggered() && isLowLight()) {
         lastOnManual = false;
         bri = briLast;
         colorUpdated(CALL_MODE_NO_NOTIFY);
@@ -92,12 +92,12 @@ class BettlichtSensors : public Usermod {
     /*
      * checks if the light-dependent resistor is triggered/activated
      */
-    boolean isLdrTriggered() {
-      boolean ret = false;
+    boolean isLowLight() {
+      boolean ret = true;
 
       for(int i = 0; i < this->ldrValues.size(); i++) {
-        if(this->ldrValues[i] < this->ldrThreshold) {
-          ret = true;
+        if(this->ldrValues[i] > this->ldrThreshold) {
+          ret = false;
           break;
         }
       }
@@ -147,12 +147,12 @@ class BettlichtSensors : public Usermod {
      */
     void setup() {
       // TODO: move this out to config
-      this->ldrPins.push_back(32);
-      this->pirPins.push_back(13);
+      /*this->ldrPins.push_back(32);
+      //this->pirPins.push_back(13);
       this->ldrThreshold = 500; // ADC res is 12bit, so values of 2^12 = 0-4095
       this->stayOnTime = 60*1000; // ms
       this->ldrKnownResistor = 10E4; // Ohms
-      this->ldrVoltage = 5; // Volts
+      this->ldrVoltage = 5; // Volts*/
 
       // set up digital pins
       for(int i = 0; i < this->pirPins.size(); i++) {
@@ -181,11 +181,12 @@ class BettlichtSensors : public Usermod {
      *    Instead, use a timer check as shown here.
      */
     void loop() {
-      if (millis() - lastTime > 300) {
+      if (millis() - lastTime > 100) {
         //uint16_t start = millis(); // TODO: benchmarking
         
         updateSensors();
-        
+        this->lastTime = millis();
+
         // uint16_t end = this->lastTime = millis(); // TODO: benchmarking
         //Serial.print("loop timing: "); Serial.print(end - start); Serial.println("ms"); // TODO:debugging
       }
@@ -282,7 +283,7 @@ class BettlichtSensors : public Usermod {
 
       // serialize pir pins
       for(int i = 0; i < this->pirPins.size(); i++) {
-        pirPinsSerialized += this->pirPins[i];
+        pirPinsSerialized += itos(this->pirPins[i]);
         if(i != this->pirPins.size() - 1) {
           pirPinsSerialized += ",";
         }
@@ -293,7 +294,7 @@ class BettlichtSensors : public Usermod {
       std::string ldrPinsSerialized;
       // serialize ldr pins
       for(int i = 0; i < this->ldrPins.size(); i++) {
-        ldrPinsSerialized += this->ldrPins[i];
+        ldrPinsSerialized += itos(this->ldrPins[i]);
         if(i != this->ldrPins.size() - 1) {
           ldrPinsSerialized += ",";
         }
@@ -358,6 +359,8 @@ class BettlichtSensors : public Usermod {
       if(ldrPinsNew.size() > 0) {
         this->ldrPins = ldrPinsNew;
       }
+
+      return true;
     }
 
    
@@ -387,6 +390,9 @@ class BettlichtSensors : public Usermod {
       return pow(2, precision) / ((float)resistance / (float)knownR + 1);
     }
 
+    /*
+     * splits a string into a vector according to some delimiter
+     */
     static std::vector<std::string> split(const char *str, char c = ' ')
     {
         std::vector<std::string> result;
@@ -402,5 +408,20 @@ class BettlichtSensors : public Usermod {
         } while (0 != *str++);
 
         return result;
+    }
+
+    /*
+     * convert an integer to a string
+     */
+    static std::string itos(int number) {
+      int numDigits = log10(number) + 1;
+
+      char buf[numDigits + 1];
+      for(int i = 0; i < numDigits; i++) {
+        buf[i] = (char) 48 + (number / ((int) pow(10, numDigits - i - 1)) % 10);
+      }
+      buf[numDigits] = 0;
+      
+      return std::string(buf);
     }
 };
