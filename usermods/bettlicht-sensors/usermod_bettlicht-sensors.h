@@ -210,7 +210,7 @@ class BettlichtSensors : public Usermod {
       JsonObject user = root["u"];
       if (user.isNull()) user = root.createNestedObject("u");
 
-      JsonArray ldrArr = user.createNestedArray("Average LDR voltage");
+      JsonArray ldrArr = user.createNestedArray("Average LDR resistance");
       ldrArr.add(getAvgLdrResistance()); //value
       ldrArr.add("Ω"); //unit
 
